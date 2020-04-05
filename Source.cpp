@@ -25,13 +25,21 @@ vector<double>  vec_proj(vector<double> a, vector<double> b, int n)
 	for (int i = 0; i < n; i++) b[i] *= k;
 	return b;
 }
-void mult(vector <vector <double>> A, vector <vector <double>> B,
+void mult(vector <vector <double>> A, vector <vector <double>> B,	//matrix*matrix
 	vector <vector <double>> &R, int n)
 {
 	for (int i = 0; i < n; i++)
 		for (int j = 0; j < n; j++)
 			for (int k = 0; k < n; k++)
 				R[i][j] += A[i][k] * B[k][j];
+}
+
+void mult(vector <vector <double>> A, vector <double> b,     //matrix*vector
+	vector <double> &R, int n)
+{
+	for (int i = 0; i < n; i++)
+		for (int k = 0; k < n; k++)
+			R[i] += A[i][k] * b[k];
 }
 
 void QR(vector <vector <double>> A, vector <vector <double>> &Q,
@@ -81,6 +89,40 @@ void QR(vector <vector <double>> A, vector <vector <double>> &Q,
 
 }
 
+void slae_solution(vector <vector <double>> &Q,
+	vector <vector <double>> &R, vector<double> &b, vector<double> &x, int n) {
+	
+	vector<double> y(n);
+	vector <vector <double>> Res(n);//Rx=Q_t*b;
+	vector <vector <double>> Q_t(n);//Q transp
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < n; j++) {
+			Q_t[j].push_back(0);
+			Res[j].push_back(0);
+		}
+	}
+	for (int i = 0; i < n; i++) {	// получение Q transp :
+		for (int j = 0; j < n; j++) {
+			Q_t[i][j] = Q[j][i];
+		}
+	}
+	
+	mult(Q_t, b, y, n);//b to matrix and y to vector
+	
+	//обратный ход(Rx=Q_t*b):
+	for (int i = 0; i < n - 1; i++)x[i] = 0;
+	x[n - 1] = y[n - 1] / R[n - 1][n - 1];
+
+	for (int i = n - 2; i >= 0; i--)
+	{
+		for (int j = i + 1; j < n; j++)
+		{
+			x[i] -= R[i][j] * x[j];
+		}
+		x[i] = (x[i] + y[i]) / R[i][i];
+	}
+}
+
 void show(vector <vector <double>> A, int n)
 {
 	for (int i = 0; i < n; i++)
@@ -97,7 +139,7 @@ int main()
 {
 	const double n = 4;
 	double det = 1.0;
-	vector <vector <double>> A(n), Q(n), R(n), Res(n), Q_(n), R_(n), A_1(n), TMP(n);
+	vector <vector <double>> A(n), Q(n), R(n), Res(n),TMP(n);
 	vector <double> b(n);
 	vector <double> y(n), x(n);
 	for (int i = 0; i < n; i++)
@@ -113,6 +155,8 @@ int main()
 	}
 	QR(A, Q, R, n);
 
+	cout << "b:" << endl;
+	for (int i = 0; i < n; i++)cout << b[i]<<" ";
 	cout << "Fisrt matrix" << endl;
 	show(A, n);
 	cout << "R matrix" << endl;
@@ -122,6 +166,10 @@ int main()
 	mult(Q, R, Res, n);
 	cout << "Q*R matrix" << endl;
 	show(Res, n);
+	slae_solution(Q, R, b, x, n);
+	cout << "slae solution:" << endl;
+	for (int i = 0; i < n; i++)cout << x[i] << " ";
+	
 	system("pause");
 	return 0;
 }
